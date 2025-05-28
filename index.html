@@ -2,22 +2,114 @@
 <html lang="cs">
 <head>
   <meta charset="UTF-8" />
-  <title>Můj wishlist</title>
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <title>Interaktivní wishlist</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f9f9f9;
+      padding: 20px;
+    }
+    .gift {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      padding: 15px;
+      margin-bottom: 20px;
+      display: flex;
+      gap: 15px;
+    }
+    img {
+      width: 150px;
+      height: auto;
+      border-radius: 8px;
+    }
+    .info {
+      flex: 1;
+    }
+    .info h2 {
+      margin-top: 0;
+    }
+    input[type="text"] {
+      padding: 5px;
+      width: 60%;
+      margin-right: 10px;
+    }
+    button {
+      padding: 6px 12px;
+    }
+  </style>
 </head>
 <body>
-  <h1>Můj wishlist</h1>
-  <div id="wishlist">Načítám seznam...</div>
+  <h1>Můj wishlist 🎁</h1>
+  <div id="wishlist">Načítám dárky...</div>
 
   <script>
-    fetch('https://raw.githubusercontent.com/vendypodzim/podv05-wishlist/main/wishlist.md')
-      .then(res => res.text())
-      .then(md => {
-        document.getElementById('wishlist').innerHTML = marked.parse(md);
-      })
-      .catch(err => {
-        document.getElementById('wishlist').innerText = 'Chyba při načítání wishlistu.';
+    const BIN_ID = "68375f178960c979a5a2566d";
+    const API_KEY = "$2a$10$Fx.X3yh8m6bwvc8x6EpCr.OEjYT0rk59GfJEWnzWrDG0IgS/H5Sw6";
+    const API_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
+
+    async function fetchGifts() {
+      const res = await fetch(API_URL + "/latest", {
+        headers: {
+          "X-Master-Key": API_KEY
+        }
       });
+      const data = await res.json();
+      return data.record;
+    }
+
+    async function updateGifts(gifts) {
+      await fetch(API_URL, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Master-Key": API_KEY
+        },
+        body: JSON.stringify(gifts)
+      });
+    }
+
+    function renderGifts(gifts) {
+      const container = document.getElementById("wishlist");
+      container.innerHTML = "";
+
+      gifts.forEach((gift, index) => {
+        const div = document.createElement("div");
+        div.className = "gift";
+
+        div.innerHTML = `
+          <img src="${gift.obrazek}" alt="${gift.nazev}">
+          <div class="info">
+            <h2><a href="${gift.odkaz}" target="_blank">${gift.nazev}</a></h2>
+            <p><strong>Cena:</strong> ${gift.cena}</p>
+            <p><strong>Zamluvil:</strong> ${gift.zamluvil || "<i>nikdo</i>"}</p>
+            <input type="text" placeholder="Tvoje jméno..." id="input-${index}" />
+            <button onclick="reserve(${index})">Zamluvit</button>
+          </div>
+        `;
+
+        container.appendChild(div);
+      });
+
+      window.currentGifts = gifts;
+    }
+
+    async function reserve(index) {
+      const input = document.getElementById(`input-${index}`);
+      const name = input.value.trim();
+
+      if (!name) {
+        alert("Prosím, zadej své jméno.");
+        return;
+      }
+
+      window.currentGifts[index].zamluvil = name;
+      await updateGifts(window.currentGifts);
+      alert("Dárek byl zamluven.");
+      renderGifts(window.currentGifts);
+    }
+
+    fetchGifts().then(renderGifts);
   </script>
 </body>
 </html>
