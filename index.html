@@ -2,7 +2,7 @@
 <html lang="cs">
 <head>
   <meta charset="UTF-8" />
-  <title>Dárkový seznam</title>
+  <title>Můj wishlist</title>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
@@ -10,7 +10,7 @@
   <div id="wishlist">Načítám seznam...</div>
 
   <script>
-    fetch('https://raw.githubusercontent.com/4ME280-webdesign-a-uzivatelska-rozhrani/podv05-wishlist/main/wishlist.md')
+    fetch('https://raw.githubusercontent.com/vendypodzim/podv05-wishlist/main/wishlist.md')
       .then(res => res.text())
       .then(md => {
         document.getElementById('wishlist').innerHTML = marked.parse(md);
